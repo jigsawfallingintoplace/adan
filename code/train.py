@@ -25,6 +25,7 @@ torch.manual_seed(opt.random_seed)
 # save logs
 if not os.path.exists(opt.model_save_file):
     os.makedirs(opt.model_save_file)
+# If folder does not exist, make folder.
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG if opt.debug else logging.INFO)
 log = logging.getLogger(__name__)
 fh = logging.FileHandler(os.path.join(opt.model_save_file, 'log.txt'))
@@ -45,6 +46,7 @@ def train(opt):
     yelp_Y_train = os.path.join(opt.src_data_dir, 'Y_train.txt.shuf')
     yelp_X_test = os.path.join(opt.src_data_dir, 'X_test.txt.tok.lower')
     yelp_Y_test = os.path.join(opt.src_data_dir, 'Y_test.txt')
+    # The file path of the four dataset
     yelp_train, yelp_valid = get_yelp_datasets(vocab, yelp_X_train, yelp_Y_train,
             opt.en_train_lines, yelp_X_test, yelp_Y_test, opt.max_seq_len)
     chn_X_file = os.path.join(opt.tgt_data_dir, 'X.sent.txt.shuf.lower')
@@ -58,6 +60,7 @@ def train(opt):
         # set to true max_seq_len in the datasets
         opt.max_seq_len = max(yelp_train.get_max_seq_len(),
                               chn_train.get_max_seq_len())
+    
     # dataset loaders
     my_collate = utils.sorted_collate if opt.model=='lstm' else utils.unsorted_collate
     yelp_train_loader = DataLoader(yelp_train, opt.batch_size,
@@ -81,7 +84,7 @@ def train(opt):
     chn_test_loader = DataLoader(chn_test, opt.batch_size,
             shuffle=False, collate_fn=my_collate)
 
-    # models
+    # modelsCNNFeatureExtractor
     if opt.model.lower() == 'dan':
         F = DANFeatureExtractor(vocab, opt.F_layers, opt.hidden_size, opt.dropout, opt.F_bn)
     elif opt.model.lower() == 'lstm':
@@ -113,6 +116,8 @@ def train(opt):
         grad_norm_p, grad_norm_q = (0, 0.0), (0, 0.0)
         for i, (inputs_en, targets_en) in tqdm(enumerate(yelp_train_iter),
                                                total=len(yelp_train)//opt.batch_size):
+
+            # English data is guaranteed to be longer than Chinese data
             try:
                 inputs_ch, _ = next(chn_train_iter)  # Chinese labels are not used
             except:

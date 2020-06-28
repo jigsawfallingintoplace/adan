@@ -9,7 +9,9 @@ class Vocab:
     def __init__(self, txt_file):
         self.vocab_size, self.emb_size = 0, opt.emb_size
         self.embeddings = []
+        # a dictionary that maps from word to number
         self.w2vvocab = {}
+        # maps from number to word
         self.v2wvocab = []
         # load pretrained embedings
         with open(txt_file, 'r') as inf:
@@ -19,6 +21,7 @@ class Vocab:
             assert es == self.emb_size
             # add an UNK token
             self.pretrained = np.empty((vs, es), dtype=np.float)
+            #the pt stands for "pretrained"
             self.pt_v2wvocab = []
             self.pt_w2vvocab = {}
             cnt = 0
@@ -34,6 +37,7 @@ class Vocab:
                     vector = [float(x) for x in vecs.split(',')]
                 else:
                     vector = [float(x) for x in parts[-self.emb_size:]]
+                # the word embedding of the word #cnt
                 self.pretrained[cnt] = vector
                 cnt += 1
         # add <unk>
@@ -55,7 +59,7 @@ class Vocab:
         return vec
 
     def init_embed_layer(self):
-        # free some memory
+        # free some memory, because all procedure of adding words are finished
         self.clear_pretrained_vectors()
         emb = nn.Embedding.from_pretrained(torch.tensor(self.embeddings, dtype=torch.float),
                 freeze=opt.fix_emb)
